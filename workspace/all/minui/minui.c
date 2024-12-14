@@ -427,6 +427,7 @@ static int can_resume = 0;
 static int should_resume = 0; // set to 1 on BTN_RESUME but only if can_resume==1
 static int simple_mode = 0;
 static char slot_path[256];
+static char slot_path_rom[256];
 
 static int restore_depth = -1;
 static int restore_relative = -1;
@@ -1019,7 +1020,7 @@ static void readyResumePath(char* rom_path, int type) {
 	strcpy(rom_file, tmp);
 	
 	sprintf(slot_path, "%s/.minui/%s/%s.txt", SHARED_USERDATA_PATH, emu_name, rom_file); // /.userdata/.minui/<EMU>/<romname>.ext.txt
-	
+	sprintf(slot_path_rom, "%s/.minui/%s/%s", USERDATA_PATH, emu_name, rom_file); // /.userdata/.minui/<EMU>/<romname>.ext
 	can_resume = exists(slot_path);
 }
 static void readyResume(Entry* entry) {
@@ -1280,6 +1281,64 @@ static void loadLast(void) { // call after loading root directory
 	StringArray_free(last);
 }
 
+/* helper functions to draw boxart and savestate preview*/
+int drawStatePreview(SDL_Surface* _screen, char* bmpPath, int stateIndex){
+    #define WINDOW_RADIUS 4 
+    
+    int ox = 156;
+	int	oy = 65;
+	int hw = FIXED_WIDTH / 2;
+	int hh = FIXED_HEIGHT / 2;
+// window
+	GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){SCALE2(ox-WINDOW_RADIUS,oy-WINDOW_RADIUS),hw+SCALE1(WINDOW_RADIUS*2),hh+SCALE1(WINDOW_RADIUS*3+6)});
+				
+	SDL_Surface* preview = IMG_Load(bmpPath);
+	if (!preview) {
+        //printf("IMG_Load: %s\n", IMG_GetError());
+        SDL_Rect preview = {SCALE2(ox,oy),hw,hh};
+		SDL_FillRect(_screen, &preview, 0);
+        GFX_blitMessage(font.small, "Empty Slot", _screen, &preview);
+    }
+    SDL_BlitSurface(preview, NULL, _screen, &(SDL_Rect){SCALE2(ox,oy)});    
+	SDL_FreeSurface(preview);
+	
+    // pagination
+	ox += 24;
+	oy += 124;
+	for (int i=0; i<9; i++) {
+		if (i==stateIndex) {
+			GFX_blitAsset(ASSET_PAGE, NULL, _screen, &(SDL_Rect){SCALE2(ox+(i*15),oy)});
+		}
+		else {
+		GFX_blitAsset(ASSET_DOT, NULL, _screen, &(SDL_Rect){SCALE2(ox+(i*15)+4,oy+2)});
+		}
+	}
+    return 1;
+}
+
+int drawBoxart(SDL_Surface* _screen, char* bmpPath){
+ #define WINDOW_RADIUS 4 
+    int ox = 0;
+	int	oy = 0;
+	int hw = FIXED_WIDTH;
+	int hh = FIXED_HEIGHT;
+// window
+	GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){ox,oy,hw,hh});
+				
+	SDL_Surface* boxart = IMG_Load(bmpPath);
+	if (!boxart) {
+        printf("IMG_Load: %s\n", IMG_GetError());
+        SDL_Rect boxart = {SCALE2(ox,oy),hw,hh};
+		SDL_FillRect(_screen, &boxart, 0);
+    }
+	SDL_BlitSurface(boxart, NULL, _screen, &(SDL_Rect){SCALE2(ox,oy)});
+	SDL_FreeSurface(boxart);
+	return 1;
+}
+
+
+/* end helper functions*/
+
 ///////////////////////////////////////
 
 static void Menu_init(void) {
@@ -1523,13 +1582,13 @@ int main (int argc, char *argv[]) {
 					char* extra_key = "Model";
 					char* extra_val = PLAT_getModel(); 
 					
-					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.large, "Release", COLOR_DARK_TEXT);
-					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.large, release, COLOR_WHITE);
-					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.large, "Commit", COLOR_DARK_TEXT);
-					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.large, commit, COLOR_WHITE);
+					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.small, "Release", COLOR_DARK_TEXT);
+					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.small, release, COLOR_WHITE);
+					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.small, "Commit", COLOR_DARK_TEXT);
+					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.small, commit, COLOR_WHITE);
 					
-					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.large, extra_key, COLOR_DARK_TEXT);
-					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.large, extra_val, COLOR_WHITE);
+					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.small, extra_key, COLOR_DARK_TEXT);
+					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.small, extra_val, COLOR_WHITE);
 					
 					int l_width = 0;
 					int r_width = 0;
@@ -1575,6 +1634,42 @@ int main (int argc, char *argv[]) {
 				// list
 				if (total>0) {
 					int selected_row = top->selected - top->start;
+
+					/*  start entry for boxart and save state preview window*/
+					Entry* myentry = top->entries->items[top->selected];
+					//if (myentry1->type == ENTRY_ROM) {
+					// current filename path is entry->path
+					
+					char myslot_path[256];
+					char myRomName[256];
+					char myBoxart_path[256];
+					char myEmuName[256];
+					//readyResume(entry);
+					sprintf(myslot_path, "%s.%d.bmp",slot_path_rom, getInt(slot_path));
+					//top->path;
+					getParentFolderName(myentry->path, myEmuName);
+					getDisplayNameParens(myentry->path, myRomName);
+					sprintf(myBoxart_path, ROMS_PATH "/%s/Imgs/%s.png", myEmuName , myRomName);
+					printf("Current item name = %s\nCurrent Item path = %s\nCurrent Item Type = %d\nCurrent Item Save present = %d\nCurrent Item Last Save Slot = %d\nCurrent Item Slot bmp file = %s\nCurrent Item boxart Img = %s\n\n", 
+									myentry->name, myentry->path, myentry->type, can_resume, (can_resume) ? getInt(slot_path) : -1, myslot_path, myBoxart_path);
+					fflush(stdout);
+					// the boxart should be entry->path ../Imgs/entry->name.png
+
+					// print the boxart
+					
+					drawBoxart(screen,myBoxart_path);
+					// end print boxart
+					//print the state slot preview if present
+					if (can_resume) {
+						drawStatePreview(screen, myslot_path, getInt(slot_path));	
+					}
+					
+					//}
+					//myentry1 = NULL;
+					GFX_blitHardwareGroup(screen, show_setting);
+					// the slot bmp should be in minui_path/EmuName/entry->name
+					/* end for boxart and save state preview window, now print the text and the buttons */
+					
 					for (int i=top->start,j=0; i<top->end; i++,j++) {
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
@@ -1587,7 +1682,7 @@ int main (int argc, char *argv[]) {
 						trimSortingMeta(&entry_name);
 					
 						char display_name[256];
-						int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+						int text_width = GFX_truncateText(font.small, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						int max_width = MIN(available_width, text_width);
 						if (j==selected_row) {
 							GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
@@ -1601,9 +1696,9 @@ int main (int argc, char *argv[]) {
 						else if (entry->unique) {
 							trimSortingMeta(&entry_unique);
 							char unique_name[256];
-							GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
+							GFX_truncateText(font.small, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
 						
-							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
+							SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, unique_name, COLOR_DARK_TEXT);
 							SDL_BlitSurface(text, &(SDL_Rect){
 								0,
 								0,
@@ -1614,9 +1709,9 @@ int main (int argc, char *argv[]) {
 								SCALE1(PADDING+(j*PILL_SIZE)+4)
 							});
 						
-							GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+							GFX_truncateText(font.small, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						}
-						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
+						SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, display_name, text_color);
 						SDL_BlitSurface(text, &(SDL_Rect){
 							0,
 							0,
@@ -1631,7 +1726,7 @@ int main (int argc, char *argv[]) {
 				}
 				else {
 					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
-					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
+					GFX_blitMessage(font.small, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
 			
 				// buttons

@@ -15,15 +15,12 @@ PLATFORMS = my282
 endif
 
 ###########################################################
-
+release:
 BUILD_HASH:=$(shell git rev-parse --short HEAD)
 RELEASE_TIME:=$(shell TZ=GMT date +%Y%m%d)
 RELEASE_BETA=
 RELEASE_BASE=MinUI-$(RELEASE_TIME)$(RELEASE_BETA)
-
-# RELEASE_DOT calculation simplified for cross-platform compatibility
-RELEASE_DOT:=$(shell find ./releases -name "${RELEASE_BASE}-[0-9]*-base.zip" | wc -l)
-
+RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
@@ -32,7 +29,7 @@ RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 export MAKEFLAGS=--no-print-directory
 
-all: setup $(PLATFORMS) special package done
+all: release setup $(PLATFORMS) special package done
 	
 shell:
 	make -f makefile.toolchain PLATFORM=$(PLATFORM)
@@ -101,22 +98,15 @@ done:
 	say "done" 2>/dev/null || true
 
 special:
-	# setup miyoomini/trimui family .tmp_update in BOOT
+	# setup miyoomini family .tmp_update in BOOT
 	mv ./build/BOOT/common ./build/BOOT/.tmp_update
 	mv ./build/BOOT/miyoo ./build/BASE/
-	mv ./build/BOOT/trimui ./build/BASE/
 	cp -R ./build/BOOT/.tmp_update ./build/BASE/miyoo/app/
-	cp -R ./build/BOOT/.tmp_update ./build/BASE/trimui/app/
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 
-package:
+package: release
 	# ----------------------------------------------------
 	# zip up build
-		
-	# move formatted readmes from workspace to build
-	cp ./workspace/readmes/BASE-out.txt ./build/BASE/README.txt
-	cp ./workspace/readmes/EXTRAS-out.txt ./build/EXTRAS/README.txt
-	rm -rf ./workspace/readmes
 	
 	cd ./build/SYSTEM && echo "$(RELEASE_NAME)\n$(BUILD_HASH)" > version.txt
 	./commits.sh > ./build/SYSTEM/commits.txt
@@ -124,14 +114,13 @@ package:
 	mkdir -p ./build/PAYLOAD
 	mv ./build/SYSTEM ./build/PAYLOAD/.system
 	cp -R ./build/BOOT/.tmp_update ./build/PAYLOAD/
-	cd ./build/PAYLOAD && zip -r ../BASE/trimui.zip .tmp_update
 	
 	cd ./build/PAYLOAD && zip -r MinUI.zip .system .tmp_update
 	mv ./build/PAYLOAD/MinUI.zip ./build/BASE
 	
-	# TODO: can I just add everything in BASE to zip?
-	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo miyoo354 trimui rg35xx rg35xxplus gkdpixel em_ui.sh MinUI.zip README.txt
-	cd ./build/EXTRAS && zip -r ../../releases/$(RELEASE_NAME)-extras.zip Bios Emus Roms Saves Tools README.txt
+	cp -R ./build/EXTRAS/* ./build/BASE
+	rm -rf ./build/BASE/miyoo354
+	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-Miyoo_A30-base+extras.zip *
 	echo "$(RELEASE_NAME)" > ./build/latest.txt
 	
 ###########################################################
