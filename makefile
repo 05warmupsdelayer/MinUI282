@@ -11,7 +11,7 @@ endif
 endif
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = miyoomini trimuismart rg35xx rg35xxplus tg5040 tg3040 rgb30 m17 gkdpixel my282 magicmini
+PLATFORMS = my282
 endif
 
 ###########################################################
@@ -20,7 +20,10 @@ BUILD_HASH:=$(shell git rev-parse --short HEAD)
 RELEASE_TIME:=$(shell TZ=GMT date +%Y%m%d)
 RELEASE_BETA=
 RELEASE_BASE=MinUI-$(RELEASE_TIME)$(RELEASE_BETA)
-RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
+
+# RELEASE_DOT calculation simplified for cross-platform compatibility
+RELEASE_DOT:=$(shell find ./releases -name "${RELEASE_BASE}-[0-9]*-base.zip" | wc -l)
+
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
@@ -64,23 +67,14 @@ cores: # TODO: can't assume every platform will have the same stock cores (platf
 	cp ./workspace/$(PLATFORM)/cores/output/pcsx_rearmed_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	
 	# extras
-ifeq ($(PLATFORM), trimuismart)
-	cp ./workspace/miyoomini/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
-else ifeq ($(PLATFORM), m17)
-	cp ./workspace/miyoomini/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
-else ifneq ($(PLATFORM),gkdpixel)
-	cp ./workspace/$(PLATFORM)/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
-endif
 	cp ./workspace/$(PLATFORM)/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/MGBA.pak
 	cp ./workspace/$(PLATFORM)/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/SGB.pak
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_pce_fast_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/PCE.pak
 	cp ./workspace/$(PLATFORM)/cores/output/pokemini_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/PKM.pak
 	cp ./workspace/$(PLATFORM)/cores/output/race_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/NGP.pak
 	cp ./workspace/$(PLATFORM)/cores/output/race_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/NGPC.pak
-ifneq ($(PLATFORM),gkdpixel)
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_supafaust_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/SUPA.pak
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_vb_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/VB.pak
-endif
 
 common: build system cores
 	
@@ -94,19 +88,15 @@ setup: name
 	
 	# ready fresh build
 	rm -rf ./build
+	mkdir -p ./build  # Ensure the build directory exists
 	mkdir -p ./releases
-	cp -R ./skeleton ./build
+	cp -R ./skeleton/* ./build
 	
 	# remove authoring detritus
 	cd ./build && find . -type f -name '.keep' -delete
 	cd ./build && find . -type f -name '*.meta' -delete
 	echo $(BUILD_HASH) > ./workspace/hash.txt
-	
-	# copy readmes to workspace so we can use Linux fmt instead of host's
-	mkdir -p ./workspace/readmes
-	cp ./skeleton/BASE/README.txt ./workspace/readmes/BASE-in.txt
-	cp ./skeleton/EXTRAS/README.txt ./workspace/readmes/EXTRAS-in.txt
-	
+		
 done:
 	say "done" 2>/dev/null || true
 
@@ -119,21 +109,7 @@ special:
 	cp -R ./build/BOOT/.tmp_update ./build/BASE/trimui/app/
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 
-tidy:
-	# ----------------------------------------------------
-	# copy rg40xxcube from rg35xxplus
-	-cp -Rn ./build/SYSTEM/rg35xxplus/ ./build/SYSTEM/rg40xxcube/
-	-cp -Rn ./build/EXTRAS/Emus/rg35xxplus/ ./build/EXTRAS/Emus/rg40xxcube/
-	-cp -Rn ./build/EXTRAS/Tools/rg35xxplus/ ./build/EXTRAS/Tools/rg40xxcube/
-	# then patch the binaries
-	LC_ALL=C find ./build/SYSTEM/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
-	LC_ALL=C find ./build/EXTRAS/Emus/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
-	LC_ALL=C find ./build/EXTRAS/Tools/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +	
-
-	# remove various detritus
-	rm -rf ./build/EXTRAS/Tools/tg5040/Developer.pak
-
-package: tidy
+package:
 	# ----------------------------------------------------
 	# zip up build
 		
@@ -164,4 +140,3 @@ package: tidy
 	# ----------------------------------------------------
 	# $@
 	@echo "$(PLATFORMS)" | grep -q "\b$@\b" && (make common PLATFORM=$@) || (exit 1)
-	
