@@ -6,8 +6,8 @@ index 108148f4579f4727146e5b8c1e05ef7382654208..4ff34d4c2b5c6031ce4c3256f1b70dab
     CFLAGS += -fno-common -ftree-vectorize -funswitch-loops
     DEFINES += -std=c99
  
-+# MY282
-+else ifeq ($(platform), my282)
++# RG35XX
++else ifeq ($(platform), rg35xx)
 +   TARGET := $(TARGET_NAME)_libretro.so
 +   CC = $(CROSS_COMPILE)gcc
 +   CXX = $(CROSS_COMPILE)g++
@@ -15,11 +15,11 @@ index 108148f4579f4727146e5b8c1e05ef7382654208..4ff34d4c2b5c6031ce4c3256f1b70dab
 +   SHARED := -shared -Wl,--version-script=link.T
 +   fpic := -fPIC
 +   PLATFORM_DEFINES += -D_GNU_SOURCE -DHAVE_STRTOF_L -DHAVE_LOCALE
-+   CFLAGS += $(CFLAGS) -O2 -mcpu=cortex-a7 -mfpu=vfpv4 -mfloat-abi=hard -mtune=cortex-a7 -ftree-vectorize -omit-frame-pointer -fno-strict-aliasing -march=armv7-a -mthumb -ffast-math -funroll-loops -flto -g0 -DNDEBUG -ffunction-sections -fdata-sections
-+   LDFLAGS += -Wl,--gc-sections -Wl,-s -Wl,-O1 -static-libgcc -static-libstdc++
-+   LIBS += -flto -lmstick
++   CFLAGS += -fomit-frame-pointer -ffast-math
++   CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a
++   CFLAGS += -fno-common -ftree-vectorize -funswitch-loops
 +   HAVE_NEON = 1
-+   SDL += SDL2
++   ARCH = arm
 +   BUILTIN_GPU = neon
 +   CPU_ARCH := arm
 +   MMAP_JIT_CACHE = 1
