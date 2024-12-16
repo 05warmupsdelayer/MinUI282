@@ -15,7 +15,7 @@ index 108148f4579f4727146e5b8c1e05ef7382654208..4ff34d4c2b5c6031ce4c3256f1b70dab
 +   SHARED := -shared -Wl,--version-script=link.T
 +   fpic := -fPIC
 +   PLATFORM_DEFINES += -D_GNU_SOURCE -DHAVE_STRTOF_L -DHAVE_LOCALE -DLOW_LATENCY_AUDIO -DHAVE_FAST_AUDIO -DENABLE_AUDIO_SYNC -DENABLE_FRAMESKIP -DREDUCE_RENDER_FPS -DDISABLE_DEBUG -DREDUCE_CPU_LOAD -DLOW_RES_RENDERING
-+   CFLAGS += -O2 -mcpu=cortex-a7 -mfpu=-mfpu=neon-vfpv4 -mfloat-abi=hard -mtune=cortex-a7 -fno-unroll-loops -fno-lto -fno-tree-vectorize -ffast-math -fno-strict-aliasing -march=armv7-a -mthumb -DNDEBUG -ffunction-sections -fdata-sections
++   CFLAGS += -O2 -mcpu=cortex-a7 -mfpu=-mfpu=neon-fp16 -mfloat-abi=hard -mtune=cortex-a7 -fno-unroll-loops -fno-lto -fno-tree-vectorize -ffast-math -fno-strict-aliasing -march=armv7-a -mthumb -DNDEBUG -ffunction-sections -fdata-sections
 +   LDFLAGS += -Wl,--gc-sections -Wl,-O2 -static-libgcc -static-libstdc++
 +   LIBS += -lasound -lpthread
 +   
