@@ -14,6 +14,12 @@ ifeq (,$(PLATFORMS))
 PLATFORMS = my282
 endif
 
+.PHONY: build
+
+export MAKEFLAGS=--no-print-directory
+
+all: release setup $(PLATFORMS) special package done
+
 ###########################################################
 release:
 BUILD_HASH:=$(shell git rev-parse --short HEAD)
@@ -24,12 +30,6 @@ RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
-
-.PHONY: build
-
-export MAKEFLAGS=--no-print-directory
-
-all: release setup $(PLATFORMS) special package done
 	
 shell:
 	make -f makefile.toolchain PLATFORM=$(PLATFORM)
