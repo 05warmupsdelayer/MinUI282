@@ -23,7 +23,7 @@ all:
 	cd ./all/clock/ && make
 	cd ./all/minput/ && make
 	cd ./all/syncsettings/ && make
-	cd ./$(PLATFORM)/cores && make download_cores.make
+	cd ./$(PLATFORM)/cores && make
 	cd ./$(PLATFORM) && make
 
 clean:
