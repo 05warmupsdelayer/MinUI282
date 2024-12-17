@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #Download built cores from https://github.com/zoltanvb/retroarch-cross-compile
 # Base URL
 BASE_URL="https://zoltanvb.github.io/armv7-hf-neon/"
