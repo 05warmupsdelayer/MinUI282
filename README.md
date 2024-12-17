@@ -1,8 +1,10 @@
 # MinUI for A30
 
-Customized with Roms/Imgs support and updated armv7-hf-neon cores.
+Updated ARMv7-HF-NEON cores.
 
-[Code Release (vMyFinUI_20240401)](https://github.com/Turro75/MyFinUI_RG35XXOG/releases/tag/vMyFinUI_20240401)  
+Supports organized ROM and image structures (e.g., Roms/Console/Imgs/Game.png, where images are named to match their corresponding ROM zip files, such as Game.zip).
+
+[used code from (vMyFinUI_20240401)](https://github.com/Turro75/MyFinUI_RG35XXOG/releases/tag/vMyFinUI_20240401)  
 Thanks to [Turro75](https://github.com/Turro75)!
 
 ## How to Build
@@ -15,9 +17,11 @@ cd MinUI282
 make
 ```
 
-Default is to download from [Code Release (armv7-hf-neon cores)](https://zoltanvb.github.io/armv7-hf-neon/)
+Default make downloads lastest cores from [here (armv7-hf-neon cores)](https://zoltanvb.github.io/armv7-hf-neon/)
 
-To build, run this before `make`:
+Core are built using using [zoltanvb/retroarch-cross-compile](https://github.com/zoltanvb/retroarch-cross-compile)
+
+To build cores, run this before `make`:
 
 ```bash
 mv workspace/my282/cores/makefile workspace/my282/cores/makefile.download && \
