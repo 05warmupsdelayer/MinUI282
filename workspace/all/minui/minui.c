@@ -1297,7 +1297,7 @@ int drawStatePreview(SDL_Surface* _screen, char* bmpPath, int stateIndex){
         //printf("IMG_Load: %s\n", IMG_GetError());
         SDL_Rect preview = {SCALE2(ox,oy),hw,hh};
 		SDL_FillRect(_screen, &preview, 0);
-        GFX_blitMessage(font.small, "Empty Slot", _screen, &preview);
+        GFX_blitMessage(font.large, "Empty Slot", _screen, &preview);
     }
     SDL_BlitSurface(preview, NULL, _screen, &(SDL_Rect){SCALE2(ox,oy)});    
 	SDL_FreeSurface(preview);
@@ -1582,13 +1582,13 @@ int main (int argc, char *argv[]) {
 					char* extra_key = "Model";
 					char* extra_val = PLAT_getModel(); 
 					
-					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.small, "Release", COLOR_DARK_TEXT);
-					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.small, release, COLOR_WHITE);
-					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.small, "Commit", COLOR_DARK_TEXT);
-					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.small, commit, COLOR_WHITE);
+					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.large, "Release", COLOR_DARK_TEXT);
+					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.large, release, COLOR_WHITE);
+					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.large, "Commit", COLOR_DARK_TEXT);
+					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.large, commit, COLOR_WHITE);
 					
-					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.small, extra_key, COLOR_DARK_TEXT);
-					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.small, extra_val, COLOR_WHITE);
+					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.large, extra_key, COLOR_DARK_TEXT);
+					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.large, extra_val, COLOR_WHITE);
 					
 					int l_width = 0;
 					int r_width = 0;
@@ -1682,7 +1682,7 @@ int main (int argc, char *argv[]) {
 						trimSortingMeta(&entry_name);
 					
 						char display_name[256];
-						int text_width = GFX_truncateText(font.small, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+						int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						int max_width = MIN(available_width, text_width);
 						if (j==selected_row) {
 							GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
@@ -1696,9 +1696,9 @@ int main (int argc, char *argv[]) {
 						else if (entry->unique) {
 							trimSortingMeta(&entry_unique);
 							char unique_name[256];
-							GFX_truncateText(font.small, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
+							GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
 						
-							SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, unique_name, COLOR_DARK_TEXT);
+							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
 							SDL_BlitSurface(text, &(SDL_Rect){
 								0,
 								0,
@@ -1709,9 +1709,9 @@ int main (int argc, char *argv[]) {
 								SCALE1(PADDING+(j*PILL_SIZE)+4)
 							});
 						
-							GFX_truncateText(font.small, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+							GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						}
-						SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, display_name, text_color);
+						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 						SDL_BlitSurface(text, &(SDL_Rect){
 							0,
 							0,
@@ -1726,7 +1726,7 @@ int main (int argc, char *argv[]) {
 				}
 				else {
 					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
-					GFX_blitMessage(font.small, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
+					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
 			
 				// buttons
