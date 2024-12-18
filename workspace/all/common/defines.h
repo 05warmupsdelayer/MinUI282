@@ -48,15 +48,15 @@
 #define COLOR_BUTTON_TEXT	(SDL_Color){TRIAD_GRAY}
 
 // all before scale
-#define PILL_SIZE 30
+#define PILL_SIZE 16
 #define BUTTON_SIZE 20
 #define BUTTON_MARGIN 5 // ((PILL_SIZE - BUTTON_SIZE) / 2)
-#define BUTTON_PADDING 12
+#define BUTTON_PADDING 10
 #define SETTINGS_SIZE 4
 #define SETTINGS_WIDTH 80
 
 #ifndef MAIN_ROW_COUNT
-#define MAIN_ROW_COUNT 6 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
+#define MAIN_ROW_COUNT 12 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
 #endif
 
 #ifndef PADDING

@@ -1336,6 +1336,21 @@ int drawBoxart(SDL_Surface* _screen, char* bmpPath){
 	return 1;
 }
 
+int fancy_mode;
+
+enum {
+    SCALE_NATIVE,
+    SCALE_ASPECT,
+    SCALE_FULLSCREEN,
+#ifdef CROP_OVERSCAN
+    SCALE_CROPPED,
+#endif
+    SCALE_COUNT,
+};
+
+#ifndef CROP_OVERSCAN
+    int SCALE_CROPPED = -1;
+#endif
 
 /* end helper functions*/
 
@@ -1635,100 +1650,114 @@ int main (int argc, char *argv[]) {
 				if (total>0) {
 					int selected_row = top->selected - top->start;
 
-					/*  start entry for boxart and save state preview window*/
-					Entry* myentry = top->entries->items[top->selected];
-					//if (myentry1->type == ENTRY_ROM) {
-					// current filename path is entry->path
-					
-					char myslot_path[256];
-					char myRomName[256];
-					char myBoxart_path[256];
-					char myEmuName[256];
-					//readyResume(entry);
-					sprintf(myslot_path, "%s.%d.bmp",slot_path_rom, getInt(slot_path));
-					//top->path;
-					getParentFolderName(myentry->path, myEmuName);
-					getDisplayNameParens(myentry->path, myRomName);
-					sprintf(myBoxart_path, ROMS_PATH "/%s/Imgs/%s.png", myEmuName , myRomName);
-					printf("Current item name = %s\nCurrent Item path = %s\nCurrent Item Type = %d\nCurrent Item Save present = %d\nCurrent Item Last Save Slot = %d\nCurrent Item Slot bmp file = %s\nCurrent Item boxart Img = %s\n\n", 
-									myentry->name, myentry->path, myentry->type, can_resume, (can_resume) ? getInt(slot_path) : -1, myslot_path, myBoxart_path);
-					fflush(stdout);
-					// the boxart should be entry->path ../Imgs/entry->name.png
+/* Start entry for boxart and save state preview window */
+Entry* myentry = top->entries->items[top->selected];
 
-					// print the boxart
-					
-					drawBoxart(screen,myBoxart_path);
-					// end print boxart
-					//print the state slot preview if present
-					if (can_resume) {
-						drawStatePreview(screen, myslot_path, getInt(slot_path));	
-					}
-					
-					//}
-					//myentry1 = NULL;
-					GFX_blitHardwareGroup(screen, show_setting);
-					// the slot bmp should be in minui_path/EmuName/entry->name
-					/* end for boxart and save state preview window, now print the text and the buttons */
-					
-					for (int i=top->start,j=0; i<top->end; i++,j++) {
-						Entry* entry = top->entries->items[i];
-						char* entry_name = entry->name;
-						char* entry_unique = entry->unique;
-						int available_width = screen->w - ( screen->w  * 3 / 5);
-						if (i==top->start && !(had_thumb && j!=selected_row)) available_width -= ow; // 
-					
-						SDL_Color text_color = COLOR_WHITE;
-					
-						trimSortingMeta(&entry_name);
-					
-						char display_name[256];
-						int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
-						int max_width = MIN(available_width, text_width);
-						if (j==selected_row) {
-							GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-								SCALE1(PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)),
-								max_width,
-								SCALE1(PILL_SIZE)
-							});
-							text_color = COLOR_BLACK;
-						}
-						else if (entry->unique) {
-							trimSortingMeta(&entry_unique);
-							char unique_name[256];
-							GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
-						
-							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
-							SDL_BlitSurface(text, &(SDL_Rect){
-								0,
-								0,
-								max_width-SCALE1(BUTTON_PADDING*2),
-								text->h
-							}, screen, &(SDL_Rect){
-								SCALE1(PADDING+BUTTON_PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)+4)
-							});
-						
-							GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
-						}
-						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
-						SDL_BlitSurface(text, &(SDL_Rect){
-							0,
-							0,
-							max_width-SCALE1(BUTTON_PADDING*2),
-							text->h
-						}, screen, &(SDL_Rect){
-							SCALE1(PADDING+BUTTON_PADDING),
-							SCALE1(PADDING+(j*PILL_SIZE)+4)
-						});
-						SDL_FreeSurface(text);
-					}
+// Variables for paths and names
+char myslot_path[256];
+char myRomName[256];
+char myBoxart_path[256];
+char myEmuName[256];
+
+// Ready save state preview
+sprintf(myslot_path, "%s.%d.bmp", slot_path_rom, getInt(slot_path));
+getParentFolderName(myentry->path, myEmuName);
+getDisplayNameParens(myentry->path, myRomName);
+sprintf(myBoxart_path, ROMS_PATH "/%s/Imgs/%s.png", myEmuName, myRomName);
+
+printf("Current item name = %s\nCurrent Item path = %s\nCurrent Item Type = %d\nCurrent Item Save present = %d\nCurrent Item Last Save Slot = %d\nCurrent Item Slot bmp file = %s\nCurrent Item boxart Img = %s\n\n", 
+        myentry->name, myentry->path, myentry->type, can_resume, 
+        (can_resume) ? getInt(slot_path) : -1, myslot_path, myBoxart_path);
+fflush(stdout);
+
+// Draw boxart
+drawBoxart(screen, myBoxart_path);
+
+// Draw save state preview if present
+if (can_resume) {
+    drawStatePreview(screen, myslot_path, getInt(slot_path));	
+}
+
+// Render graphics
+GFX_blitHardwareGroup(screen, show_setting);
+
+/* End for boxart and save state preview window, now print the text and the buttons */
+
+// Iterate through menu entries
+for (int i = top->start, j = 0; i < top->end; i++, j++) {
+    Entry* entry = top->entries->items[i];
+    char* entry_name = entry->name;
+    char* entry_unique = entry->unique;
+    int available_width = screen->w - (screen->w * 3 / 5);
+
+    // Adjust available width if a thumbnail is present
+    if (i == top->start && !(had_thumb && j != selected_row)) {
+        available_width -= ow;
+    }
+
+    // Set default text color to white
+    SDL_Color text_color = COLOR_WHITE;
+    
+    // NES red color for the selected row's text
+    SDL_Color selected_text_color = { 255, 0, 0, 255 };  // NES red: RGB(255, 0, 0)
+
+    // Trim sorting metadata
+    trimSortingMeta(&entry_name);
+
+    char display_name[256];
+    int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
+    int max_width = MIN(available_width, text_width);
+
+    if (j == selected_row) {
+        // Render selected text in NES red without a pill background
+        SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, entry_unique ? entry_unique : entry_name, selected_text_color);
+        SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+            SCALE1(0),  // Remove padding
+            SCALE1(0 + (j * PILL_SIZE) + 4)  // Adjust position for selected row
+        });
+        SDL_FreeSurface(text);
+    } else {
+        // Truncate text for unselected rows
+        if (entry->unique) {
+            trimSortingMeta(&entry_unique);
+            char unique_name[256];
+            GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING * 2));
+            
+            SDL_Surface* unique_text = TTF_RenderUTF8_Blended(font.large, unique_name, text_color);
+            SDL_BlitSurface(unique_text, &(SDL_Rect){
+                0,
+                0,
+                max_width - SCALE1(0),  // Remove padding
+                unique_text->h
+            }, screen, &(SDL_Rect){
+                SCALE1(0),  // Remove padding
+                SCALE1(0 + (j * PILL_SIZE) + 8)  // Adjust position
+            });
+            SDL_FreeSurface(unique_text);
+
+            GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
+        }
+
+        SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
+        SDL_BlitSurface(text, &(SDL_Rect){
+            0,
+            0,
+            max_width - SCALE1(0),  // Remove padding
+            text->h
+        }, screen, &(SDL_Rect){
+            SCALE1(0),  // Remove padding
+            SCALE1(0 + (j * PILL_SIZE) + 8)  // Adjust position
+        });
+        SDL_FreeSurface(text);
+    }
+}}
+/* End entry for boxart and save state preview window */
+
+else {
+	// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
+  		GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
-				else {
-					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
-					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
-				}
-			
+
 				// buttons
 				if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
 				else if (can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, 0, screen, 0);
