@@ -1733,60 +1733,65 @@ int main (int argc, char *argv[]) {
 					GFX_blitHardwareGroup(screen, show_setting);
 					// the slot bmp should be in minui_path/EmuName/entry->name
 					/* end for boxart and save state preview window, now print the text and the buttons */
-					
-					for (int i=top->start,j=0; i<top->end; i++,j++) {
-						Entry* entry = top->entries->items[i];
-						char* entry_name = entry->name;
-						char* entry_unique = entry->unique;
-						int available_width = (had_thumb && j!=selected_row ? ox : screen->w) - SCALE1(PADDING * 2);
-						if (i==top->start && !(had_thumb && j!=selected_row)) available_width -= ow; // 
-					
-						SDL_Color text_color = COLOR_WHITE;
-					
-						trimSortingMeta(&entry_name);
-					
-						char display_name[256];
-						int text_width = GFX_truncateText(font.small, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
-						int max_width = MIN(available_width, text_width);
-						if (j==selected_row) {
-							GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-								SCALE1(PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)),
-								max_width,
-								SCALE1(PILL_SIZE)
-							});
-							text_color = COLOR_DARK_TEXT;
-						}
-						else if (entry->unique) {
-							trimSortingMeta(&entry_unique);
-							char unique_name[256];
-							GFX_truncateText(font.small, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
-						
-							SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, unique_name, COLOR_DARK_TEXT);
-							SDL_BlitSurface(text, &(SDL_Rect){
-								0,
-								0,
-								max_width-SCALE1(BUTTON_PADDING*2),
-								text->h
-							}, screen, &(SDL_Rect){
-								SCALE1(PADDING+BUTTON_PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)+4)
-							});
-						
-							GFX_truncateText(font.small, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
-						}
-						SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, display_name, text_color);
-						SDL_BlitSurface(text, &(SDL_Rect){
-							0,
-							0,
-							max_width-SCALE1(BUTTON_PADDING*2),
-							text->h
-						}, screen, &(SDL_Rect){
-							SCALE1(PADDING+BUTTON_PADDING),
-							SCALE1(PADDING+(j*PILL_SIZE)+4)
-						});
-						SDL_FreeSurface(text);
-					}
+
+for (int i = top->start, j = 0; i < top->end; i++, j++) {
+    Entry* entry = top->entries->items[i];
+    char* entry_name = entry->name;
+    char* entry_unique = entry->unique;
+
+    // Adjust available width for non-selected items
+    int available_width = (j == selected_row) ? screen->w : screen->w / 2; // Double the width for truncated text
+    available_width -= SCALE1(PADDING * 2);
+    if (i == top->start && !(had_thumb && j != selected_row)) {
+        available_width -= ow;
+    }
+
+    SDL_Color text_color = COLOR_WHITE;
+
+    // Trim sorting metadata
+    trimSortingMeta(&entry_name);
+
+    char display_name[256];
+    int text_width = GFX_truncateText(font.small, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
+    int max_width = MIN(available_width, text_width);
+
+    int pill_x = SCALE1(PADDING); // Horizontal position of the pill
+    int pill_y = SCALE1(PADDING + (j * PILL_SIZE)); // Vertical position of the pill
+    int pill_height = SCALE1(PILL_SIZE); // Height of the pill
+
+    if (j == selected_row) {
+        // Render selected entry with full width
+        GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+            pill_x,
+            pill_y,
+            max_width,
+            pill_height
+        });
+        text_color = COLOR_DARK_TEXT;
+    }
+
+    // Create the text surface here
+    SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, display_name, text_color);
+
+    // Calculate the center for the text within the pill
+    int text_x = pill_x + (max_width - text->w) / 2; // Horizontal center of text
+    int text_y = pill_y + (pill_height - text->h) / 2; // Vertical center of text
+
+    // Render the text
+    SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+        text_x, // Horizontal position
+        text_y, // Vertical position
+        max_width, // Width of text (use max_width)
+        text->h // Height of the text
+    });
+
+    // Free the text surface after rendering
+    SDL_FreeSurface(text);
+}
+
+
+
+
 				}
 				else {
 					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
