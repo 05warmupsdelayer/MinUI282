@@ -155,7 +155,50 @@ static void EntryArray_free(Array* self) {
 	}
 	Array_free(self);
 }
+///////////////////////////////////////
 
+
+// Define a simple image cache structure
+#define MAX_CACHE_SIZE 10
+
+typedef struct {
+    char path[256];
+    SDL_Surface* surface;
+} ImageCacheEntry;
+
+ImageCacheEntry imageCache[MAX_CACHE_SIZE];
+int cacheSize = 0;
+
+// Utility functions for caching
+SDL_Surface* getCachedImage(const char* path);
+void addImageToCache(const char* path, SDL_Surface* surface);
+
+// Utility function to find an image in the cache
+SDL_Surface* getCachedImage(const char* path) {
+    for (int i = 0; i < cacheSize; i++) {
+        if (strcmp(imageCache[i].path, path) == 0) {
+            return imageCache[i].surface;
+        }
+    }
+    return NULL;
+}
+
+// Utility function to add an image to the cache
+void addImageToCache(const char* path, SDL_Surface* surface) {
+    if (cacheSize < MAX_CACHE_SIZE) {
+        strcpy(imageCache[cacheSize].path, path);
+        imageCache[cacheSize].surface = surface;
+        cacheSize++;
+    } else {
+        // Replace the oldest cache entry (simple FIFO replacement)
+        SDL_FreeSurface(imageCache[0].surface);
+        for (int i = 1; i < MAX_CACHE_SIZE; i++) {
+            imageCache[i - 1] = imageCache[i];
+        }
+        strcpy(imageCache[MAX_CACHE_SIZE - 1].path, path);
+        imageCache[MAX_CACHE_SIZE - 1].surface = surface;
+    }
+}
 ///////////////////////////////////////
 
 #define INT_ARRAY_MAX 27
@@ -1282,59 +1325,80 @@ static void loadLast(void) { // call after loading root directory
 }
 
 /* helper functions to draw boxart and savestate preview*/
-int drawStatePreview(SDL_Surface* _screen, char* bmpPath, int stateIndex){
-    #define WINDOW_RADIUS 4 
-    
+int drawStatePreview(SDL_Surface* _screen, char* bmpPath, int stateIndex) {
+    #define WINDOW_RADIUS 4
+
     int ox = 156;
-	int	oy = 65;
-	int hw = FIXED_WIDTH / 2;
-	int hh = FIXED_HEIGHT / 2;
-// window
-	GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){SCALE2(ox-WINDOW_RADIUS,oy-WINDOW_RADIUS),hw+SCALE1(WINDOW_RADIUS*2),hh+SCALE1(WINDOW_RADIUS*3+6)});
-				
-	SDL_Surface* preview = IMG_Load(bmpPath);
-	if (!preview) {
-        //printf("IMG_Load: %s\n", IMG_GetError());
-        SDL_Rect preview = {SCALE2(ox,oy),hw,hh};
-		SDL_FillRect(_screen, &preview, 0);
-        GFX_blitMessage(font.small, "Empty Slot", _screen, &preview);
+    int oy = 65;
+    int hw = FIXED_WIDTH / 2;
+    int hh = FIXED_HEIGHT / 2;
+
+    // Draw window background
+    GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){SCALE2(ox - WINDOW_RADIUS, oy - WINDOW_RADIUS), hw + SCALE1(WINDOW_RADIUS * 2), hh + SCALE1(WINDOW_RADIUS * 3 + 6)});
+
+    // Check if the preview is already cached
+    SDL_Surface* preview = getCachedImage(bmpPath);
+    if (!preview) {
+        // Load the image if not in cache
+        preview = IMG_Load(bmpPath);
+        if (!preview) {
+            SDL_Rect previewRect = {SCALE2(ox, oy), hw, hh};
+            SDL_FillRect(_screen, &previewRect, 0);
+            GFX_blitMessage(font.small, "Empty Slot", _screen, &previewRect);
+            return 0;
+        }
+        // Add the image to the cache
+        addImageToCache(bmpPath, preview);
     }
-    SDL_BlitSurface(preview, NULL, _screen, &(SDL_Rect){SCALE2(ox,oy)});    
-	SDL_FreeSurface(preview);
-	
-    // pagination
-	ox += 24;
-	oy += 124;
-	for (int i=0; i<9; i++) {
-		if (i==stateIndex) {
-			GFX_blitAsset(ASSET_PAGE, NULL, _screen, &(SDL_Rect){SCALE2(ox+(i*15),oy)});
-		}
-		else {
-		GFX_blitAsset(ASSET_DOT, NULL, _screen, &(SDL_Rect){SCALE2(ox+(i*15)+4,oy+2)});
-		}
-	}
+
+    // Blit the preview to the screen
+    SDL_BlitSurface(preview, NULL, _screen, &(SDL_Rect){SCALE2(ox, oy)});
+
+    // Draw pagination dots
+    ox += 24;
+    oy += 124;
+    for (int i = 0; i < 9; i++) {
+        if (i == stateIndex) {
+            GFX_blitAsset(ASSET_PAGE, NULL, _screen, &(SDL_Rect){SCALE2(ox + (i * 15), oy)});
+        } else {
+            GFX_blitAsset(ASSET_DOT, NULL, _screen, &(SDL_Rect){SCALE2(ox + (i * 15) + 4, oy + 2)});
+        }
+    }
+
     return 1;
 }
 
-int drawBoxart(SDL_Surface* _screen, char* bmpPath){
- #define WINDOW_RADIUS 4 
+
+int drawBoxart(SDL_Surface* _screen, char* bmpPath) {
+    #define WINDOW_RADIUS 4
     int ox = 0;
-	int	oy = 0;
-	int hw = FIXED_WIDTH;
-	int hh = FIXED_HEIGHT;
-// window
-	GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){ox,oy,hw,hh});
-				
-	SDL_Surface* boxart = IMG_Load(bmpPath);
-	if (!boxart) {
-        printf("IMG_Load: %s\n", IMG_GetError());
-        SDL_Rect boxart = {SCALE2(ox,oy),hw,hh};
-		SDL_FillRect(_screen, &boxart, 0);
+    int oy = 0;
+    int hw = FIXED_WIDTH;
+    int hh = FIXED_HEIGHT;
+
+    // Draw window background
+    GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){ox, oy, hw, hh});
+
+    // Check if the image is already cached
+    SDL_Surface* boxart = getCachedImage(bmpPath);
+    if (!boxart) {
+        // Load the image if not in cache
+        boxart = IMG_Load(bmpPath);
+        if (!boxart) {
+            printf("IMG_Load: %s\\n", IMG_GetError());
+            SDL_Rect boxartRect = {SCALE2(ox, oy), hw, hh};
+            SDL_FillRect(_screen, &boxartRect, 0);
+            return 0;
+        }
+        // Add the image to the cache
+        addImageToCache(bmpPath, boxart);
     }
-	SDL_BlitSurface(boxart, NULL, _screen, &(SDL_Rect){SCALE2(ox,oy)});
-	SDL_FreeSurface(boxart);
-	return 1;
+
+    // Blit the boxart to the screen
+    SDL_BlitSurface(boxart, NULL, _screen, &(SDL_Rect){SCALE2(ox, oy)});
+    return 1;
 }
+
 
 
 /* end helper functions*/
