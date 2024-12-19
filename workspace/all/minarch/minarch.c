@@ -3738,7 +3738,7 @@ static int Menu_options(MenuList* list) {
 							w,
 							SCALE1(BUTTON_SIZE)
 						});
-						text_color = COLOR_BLACK;
+						text_color = COLOR_DARK_TEXT;
 						
 						if (item->desc) desc = item->desc;
 					}
@@ -3795,7 +3795,7 @@ static int Menu_options(MenuList* list) {
 							w,
 							SCALE1(BUTTON_SIZE)
 						});
-						text_color = COLOR_BLACK;
+						text_color = COLOR_DARK_TEXT;
 						
 						if (item->desc) desc = item->desc;
 					}
@@ -3865,7 +3865,7 @@ static int Menu_options(MenuList* list) {
 							w,
 							SCALE1(BUTTON_SIZE)
 						});
-						text_color = COLOR_BLACK;
+						text_color = COLOR_DARK_TEXT;
 						
 						if (item->desc) desc = item->desc;
 					}
@@ -4417,7 +4417,7 @@ static void Menu_loop(void) {
 						ow,
 						SCALE1(PILL_SIZE)
 					});
-					text_color = COLOR_BLACK;
+					text_color = COLOR_DARK_TEXT;
 				}
 				else {
 					// shadow

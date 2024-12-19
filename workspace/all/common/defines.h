@@ -34,11 +34,11 @@
 #define TRIAD_WHITE 		0xff,0xff,0xff
 #define TRIAD_BLACK 		0x00,0x00,0x00
 #define TRIAD_LIGHT_GRAY 	0x7f,0x7f,0x7f
-#define TRIAD_GRAY 			0x99,0x99,0x99
+#define TRIAD_GRAY 		0x99,0x99,0x99
 #define TRIAD_DARK_GRAY 	0x26,0x26,0x26
 
 #define TRIAD_LIGHT_TEXT 	0xcc,0xcc,0xcc
-#define TRIAD_DARK_TEXT 	0x66,0x66,0x66
+#define TRIAD_DARK_TEXT 	0xe4,0x00,0x00  // RED
 
 #define COLOR_WHITE			(SDL_Color){TRIAD_WHITE}
 #define COLOR_GRAY			(SDL_Color){TRIAD_GRAY}
@@ -48,25 +48,25 @@
 #define COLOR_BUTTON_TEXT	(SDL_Color){TRIAD_GRAY}
 
 // all before scale
-#define PILL_SIZE 16
+#define PILL_SIZE 30
 #define BUTTON_SIZE 20
 #define BUTTON_MARGIN 5 // ((PILL_SIZE - BUTTON_SIZE) / 2)
-#define BUTTON_PADDING 10
+#define BUTTON_PADDING 12
 #define SETTINGS_SIZE 4
 #define SETTINGS_WIDTH 80
 
 #ifndef MAIN_ROW_COUNT
-#define MAIN_ROW_COUNT 12 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
+#define MAIN_ROW_COUNT 6 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
 #endif
 
 #ifndef PADDING
 #define PADDING 10 // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
 #endif
 
-#define FONT_LARGE 16 	// menu
-#define FONT_MEDIUM 14 	// single char button label
-#define FONT_SMALL 12 	// button hint
-#define FONT_TINY 10  	// multi char button label
+#define FONT_LARGE 23 	// menu
+#define FONT_MEDIUM 19 	// single char button label
+#define FONT_SMALL 16 	// button hint
+#define FONT_TINY 14  	// multi char button label
 
 ///////////////////////////////
 
