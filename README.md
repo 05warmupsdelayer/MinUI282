@@ -1,11 +1,11 @@
 # MinUI282 (Miyoo A30)
 
+Only the A30 files included. 
+
 Updated ARMv7-HF-NEON cores.
 
-Supports organized ROM and image structures (e.g., Roms/Console/Imgs/Game.png, where images are named to match their corresponding ROM zip files, such as Game.zip).
-
-[used code from (vMyFinUI_20240401)](https://github.com/Turro75/MyFinUI_RG35XXOG/releases/tag/vMyFinUI_20240401)  
-Thanks to [Turro75](https://github.com/Turro75)!
+Supports organized ROM & Imgs structure for boxart / screenshots.
+(e.g., Roms/Console/Imgs/Game.png, where images are named to match their corresponding ROM zip files, such as Game.zip).
 
 ## How to Build
 
