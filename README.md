@@ -1,4 +1,4 @@
-# MinUI for A30
+# MinUI282 (Miyoo A30)
 
 Updated ARMv7-HF-NEON cores.
 
