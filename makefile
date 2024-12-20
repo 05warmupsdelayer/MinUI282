@@ -28,7 +28,6 @@ RELEASE_BETA=
 RELEASE_BASE=MinUI282-$(RELEASE_TIME)$(RELEASE_BETA)
 RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
-
 ###########################################################
 	
 shell:
@@ -121,7 +120,7 @@ package: release
 	cp -R ./build/EXTRAS/* ./build/BASE
 	rm -rf ./build/BASE/miyoo354
 	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-Miyoo_A30-base+extras.zip *
-	echo "$(RELEASE_NAME)" > ./build/latest.txt
+	echo "$(RELEASE_NAME)-$(shell cat ./workspace/hash.txt)" > ./build/latest.txt
 	
 ###########################################################
 

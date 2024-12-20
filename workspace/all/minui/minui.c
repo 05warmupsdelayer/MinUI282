@@ -155,50 +155,7 @@ static void EntryArray_free(Array* self) {
 	}
 	Array_free(self);
 }
-///////////////////////////////////////
 
-
-// Define a simple image cache structure
-#define MAX_CACHE_SIZE 10
-
-typedef struct {
-    char path[256];
-    SDL_Surface* surface;
-} ImageCacheEntry;
-
-ImageCacheEntry imageCache[MAX_CACHE_SIZE];
-int cacheSize = 0;
-
-// Utility functions for caching
-SDL_Surface* getCachedImage(const char* path);
-void addImageToCache(const char* path, SDL_Surface* surface);
-
-// Utility function to find an image in the cache
-SDL_Surface* getCachedImage(const char* path) {
-    for (int i = 0; i < cacheSize; i++) {
-        if (strcmp(imageCache[i].path, path) == 0) {
-            return imageCache[i].surface;
-        }
-    }
-    return NULL;
-}
-
-// Utility function to add an image to the cache
-void addImageToCache(const char* path, SDL_Surface* surface) {
-    if (cacheSize < MAX_CACHE_SIZE) {
-        strcpy(imageCache[cacheSize].path, path);
-        imageCache[cacheSize].surface = surface;
-        cacheSize++;
-    } else {
-        // Replace the oldest cache entry (simple FIFO replacement)
-        SDL_FreeSurface(imageCache[0].surface);
-        for (int i = 1; i < MAX_CACHE_SIZE; i++) {
-            imageCache[i - 1] = imageCache[i];
-        }
-        strcpy(imageCache[MAX_CACHE_SIZE - 1].path, path);
-        imageCache[MAX_CACHE_SIZE - 1].surface = surface;
-    }
-}
 ///////////////////////////////////////
 
 #define INT_ARRAY_MAX 27
@@ -1324,84 +1281,6 @@ static void loadLast(void) { // call after loading root directory
 	StringArray_free(last);
 }
 
-/* helper functions to draw boxart and savestate preview*/
-int drawStatePreview(SDL_Surface* _screen, char* bmpPath, int stateIndex) {
-    #define WINDOW_RADIUS 4
-
-    int ox = 156;
-    int oy = 65;
-    int hw = FIXED_WIDTH / 2;
-    int hh = FIXED_HEIGHT / 2;
-
-    // Draw window background
-    GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){SCALE2(ox - WINDOW_RADIUS, oy - WINDOW_RADIUS), hw + SCALE1(WINDOW_RADIUS * 2), hh + SCALE1(WINDOW_RADIUS * 3 + 6)});
-
-    // Check if the preview is already cached
-    SDL_Surface* preview = getCachedImage(bmpPath);
-    if (!preview) {
-        // Load the image if not in cache
-        preview = IMG_Load(bmpPath);
-        if (!preview) {
-            SDL_Rect previewRect = {SCALE2(ox, oy), hw, hh};
-            SDL_FillRect(_screen, &previewRect, 0);
-            GFX_blitMessage(font.small, "Empty Slot", _screen, &previewRect);
-            return 0;
-        }
-        // Add the image to the cache
-        addImageToCache(bmpPath, preview);
-    }
-
-    // Blit the preview to the screen
-    SDL_BlitSurface(preview, NULL, _screen, &(SDL_Rect){SCALE2(ox, oy)});
-
-    // Draw pagination dots
-    ox += 24;
-    oy += 124;
-    for (int i = 0; i < 9; i++) {
-        if (i == stateIndex) {
-            GFX_blitAsset(ASSET_PAGE, NULL, _screen, &(SDL_Rect){SCALE2(ox + (i * 15), oy)});
-        } else {
-            GFX_blitAsset(ASSET_DOT, NULL, _screen, &(SDL_Rect){SCALE2(ox + (i * 15) + 4, oy + 2)});
-        }
-    }
-
-    return 1;
-}
-
-
-int drawBoxart(SDL_Surface* _screen, char* bmpPath) {
-    #define WINDOW_RADIUS 4
-    int ox = 0;
-    int oy = 0;
-    int hw = FIXED_WIDTH;
-    int hh = FIXED_HEIGHT;
-
-    // Draw window background
-    GFX_blitRect(ASSET_STATE_BG, _screen, &(SDL_Rect){ox, oy, hw, hh});
-
-    // Check if the image is already cached
-    SDL_Surface* boxart = getCachedImage(bmpPath);
-    if (!boxart) {
-        // Load the image if not in cache
-        boxart = IMG_Load(bmpPath);
-        if (!boxart) {
-            printf("IMG_Load: %s\\n", IMG_GetError());
-            SDL_Rect boxartRect = {SCALE2(ox, oy), hw, hh};
-            SDL_FillRect(_screen, &boxartRect, 0);
-            return 0;
-        }
-        // Add the image to the cache
-        addImageToCache(bmpPath, boxart);
-    }
-
-    // Blit the boxart to the screen
-    SDL_BlitSurface(boxart, NULL, _screen, &(SDL_Rect){SCALE2(ox, oy)});
-    return 1;
-}
-
-
-
-/* end helper functions*/
 
 ///////////////////////////////////////
 
@@ -1598,35 +1477,100 @@ int main (int argc, char *argv[]) {
 			
 			int ox;
 			int oy;
-			
-			// simple thumbnail support a thumbnail for a file or folder named NAME.EXT needs a corresponding /.res/NAME.EXT.png 
-			// that is no bigger than platform FIXED_HEIGHT x FIXED_HEIGHT
-			int had_thumb = 0;
-			if (!show_version && total>0) {
-				Entry* entry = top->entries->items[top->selected];
-				char res_path[MAX_PATH];
-				
-				char res_root[MAX_PATH];
-				strcpy(res_root, entry->path);
-				
-				char tmp_path[MAX_PATH];
-				strcpy(tmp_path, entry->path);
-				char* res_name = strrchr(tmp_path, '/') + 1;
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Simple thumbnail support: A thumbnail for a file or folder named NAME.EXT
+// requires a corresponding Img/NAME.EXT.png that is no bigger than FIXED_HEIGHT x FIXED_HEIGHT
+int had_thumb = 0;
 
-				char* tmp = strrchr(res_root, '/');
-				tmp[0] = '\0';
-				
-				sprintf(res_path, "%s/.res/%s.png", res_root, res_name);
-				LOG_info("res_path: %s\n", res_path);
-				if (exists(res_path)) {
-					had_thumb = 1;
-					SDL_Surface* thumb = IMG_Load(res_path);
-					ox = MAX(FIXED_WIDTH - FIXED_HEIGHT, (FIXED_WIDTH - thumb->w));
-					oy = (FIXED_HEIGHT - thumb->h) / 2;
-					SDL_BlitSurface(thumb, NULL, screen, &(SDL_Rect){ox,oy});
-					SDL_FreeSurface(thumb);
-				}
-			}
+if (!show_version && total > 0) {
+    // Retrieve the selected entry
+    Entry* entry = top->entries->items[top->selected];
+    
+    char res_path[MAX_PATH];
+    char rom_name[256];
+    char emu_name[256];
+    
+    // Extract emulator and ROM names 
+    getParentFolderName(entry->path, emu_name);
+    getDisplayNameParens(entry->path, rom_name);
+    
+    // Construct the resource path using the Img/ directory structure
+    sprintf(res_path, ROMS_PATH "/%s/Imgs/%s.png", emu_name, rom_name);
+    
+    LOG_info("res_path: %s\n", res_path);
+    
+    // Check if the thumbnail exists
+    if (exists(res_path)) {
+        had_thumb = 1;
+        
+        // Define your custom values
+        int ox = screen->w / 2;  // Left side reserved for the menu
+        int oy = 65 - 15;   // - Moves px up
+
+        // Adjust box size based on the remaining width
+        int hw = (screen->w - ox) / 2 * 1.76 + 30;  // Increase width to scale more to the right
+        int hh = FIXED_HEIGHT / 2 * 1.5; // Increase height to move down a bit
+
+        // Check if the thumbnail exists and load it
+        SDL_Surface* thumb = IMG_Load(res_path);
+        if (thumb) {
+            // Get the original image's width and height
+            int img_width = thumb->w;
+            int img_height = thumb->h;
+
+            // Calculate the scaling factor while preserving aspect ratio
+            float aspect_ratio = (float)img_width / (float)img_height;
+            
+            int new_width, new_height;
+            
+            // Scale image to fit inside the box while preserving aspect ratio
+            if (img_width > img_height) {
+                // Width is larger than height, adjust based on width
+                new_width = hw;
+                new_height = (int)(hw / aspect_ratio);
+                if (new_height > hh) {
+                    // If the height exceeds the box height, scale by height
+                    new_height = hh;
+                    new_width = (int)(hh * aspect_ratio);
+                }
+            } else {
+                // Height is larger than width, adjust based on height
+                new_height = hh;
+                new_width = (int)(hh * aspect_ratio);
+                if (new_width > hw) {
+                    // If the width exceeds the box width, scale by width
+                    new_width = hw;
+                    new_height = (int)(hw / aspect_ratio);
+                }
+            }
+
+            // Create a scaled version of the thumbnail
+            SDL_Surface* scaled_thumb = SDL_CreateRGBSurface(0, new_width, new_height, thumb->format->BitsPerPixel,
+                                                              thumb->format->Rmask, thumb->format->Gmask, thumb->format->Bmask, thumb->format->Amask);
+
+            // Scale the image into the new surface
+            SDL_BlitScaled(thumb, NULL, scaled_thumb, NULL);
+
+            // Position the scaled thumbnail inside the box, aligned to the right
+            int thumb_x = ox + (hw - new_width) / 2 - 25; // Shift the thumbnail a little to the left
+            int thumb_y = oy + (hh - new_height) / 2; // Move the thumbnail slightly down inside the box
+
+            // Blit the scaled thumbnail to the screen inside the box
+            SDL_BlitSurface(scaled_thumb, NULL, screen, &(SDL_Rect){thumb_x, thumb_y});
+            SDL_FreeSurface(scaled_thumb);
+            SDL_FreeSurface(thumb);
+        } else {
+            LOG_error("Failed to load thumbnail: %s\n", res_path);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 			
 			int ow = GFX_blitHardwareGroup(screen, show_setting);
 			
@@ -1699,40 +1643,7 @@ int main (int argc, char *argv[]) {
 				if (total>0) {
 					int selected_row = top->selected - top->start;
 
-					/*  start entry for boxart and save state preview window*/
-					Entry* myentry = top->entries->items[top->selected];
-					//if (myentry1->type == ENTRY_ROM) {
-					// current filename path is entry->path
 					
-					char myslot_path[256];
-					char myRomName[256];
-					char myBoxart_path[256];
-					char myEmuName[256];
-					//readyResume(entry);
-					sprintf(myslot_path, "%s.%d.bmp",slot_path_rom, getInt(slot_path));
-					//top->path;
-					getParentFolderName(myentry->path, myEmuName);
-					getDisplayNameParens(myentry->path, myRomName);
-					sprintf(myBoxart_path, ROMS_PATH "/%s/Imgs/%s.png", myEmuName , myRomName);
-					printf("Current item name = %s\nCurrent Item path = %s\nCurrent Item Type = %d\nCurrent Item Save present = %d\nCurrent Item Last Save Slot = %d\nCurrent Item Slot bmp file = %s\nCurrent Item boxart Img = %s\n\n", 
-									myentry->name, myentry->path, myentry->type, can_resume, (can_resume) ? getInt(slot_path) : -1, myslot_path, myBoxart_path);
-					fflush(stdout);
-					// the boxart should be entry->path ../Imgs/entry->name.png
-
-					// print the boxart
-					
-					drawBoxart(screen,myBoxart_path);
-					// end print boxart
-					//print the state slot preview if present
-					if (can_resume) {
-						drawStatePreview(screen, myslot_path, getInt(slot_path));	
-					}
-					
-					//}
-					//myentry1 = NULL;
-					GFX_blitHardwareGroup(screen, show_setting);
-					// the slot bmp should be in minui_path/EmuName/entry->name
-					/* end for boxart and save state preview window, now print the text and the buttons */
 
 for (int i = top->start, j = 0; i < top->end; i++, j++) {
     Entry* entry = top->entries->items[i];
