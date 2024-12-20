@@ -119,7 +119,7 @@ package: release
 	
 	cp -R ./build/EXTRAS/* ./build/BASE
 	rm -rf ./build/BASE/miyoo354
-	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-Miyoo_A30-base+extras.zip *
+	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-$(shell cat ./workspace/hash.txt)-Miyoo_A30-base+extras.zip *
 	echo "$(RELEASE_NAME)-$(shell cat ./workspace/hash.txt)" > ./build/latest.txt
 	
 ###########################################################
