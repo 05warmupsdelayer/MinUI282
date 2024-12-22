@@ -5,6 +5,7 @@
 *.dtb
 *.zip
 
+BOXART
 build
 releases
 toolchains
