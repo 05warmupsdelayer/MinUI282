@@ -703,14 +703,14 @@ void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	int cpu  = 1;
 	switch (speed) {
-		case CPU_SPEED_MENU: 		freq =  576; cpu = 1; break;
-		case CPU_SPEED_POWERSAVE:	freq = 1056; cpu = 1; break;
-		case CPU_SPEED_NORMAL: 		freq = 1344; cpu = 2; break;
-		case CPU_SPEED_PERFORMANCE: freq = 1512; cpu = 2; break;
+		case CPU_SPEED_MENU: 		freq =  600; cpu = 1; break;
+		case CPU_SPEED_POWERSAVE:	freq = 1100; cpu = 2; break;
+		case CPU_SPEED_NORMAL: 		freq = 1300; cpu = 3; break;
+		case CPU_SPEED_PERFORMANCE: freq = 1488; cpu = 4; break;
 	}
 
 	char cmd[128];
-	sprintf(cmd,"overclock.elf userspace %d %d 384 1080 0", cpu, freq);
+	sprintf(cmd,"overclock.elf userspace %d %d 384 1100 0", cpu, freq);
 	system(cmd);
 }
 

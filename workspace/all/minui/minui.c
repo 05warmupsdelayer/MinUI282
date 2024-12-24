@@ -1590,13 +1590,13 @@ if (!show_version && total > 0) {
 					char* extra_key = "Model";
 					char* extra_val = PLAT_getModel(); 
 					
-					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.small, "Release", COLOR_DARK_TEXT);
-					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.small, release, COLOR_WHITE);
-					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.small, "Commit", COLOR_DARK_TEXT);
-					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.small, commit, COLOR_WHITE);
+					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.large, "Release", COLOR_DARK_TEXT);
+					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.large, release, COLOR_WHITE);
+					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.large, "Commit", COLOR_DARK_TEXT);
+					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.large, commit, COLOR_WHITE);
 					
-					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.small, extra_key, COLOR_DARK_TEXT);
-					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.small, extra_val, COLOR_WHITE);
+					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.large, extra_key, COLOR_DARK_TEXT);
+					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.large, extra_val, COLOR_WHITE);
 					
 					int l_width = 0;
 					int r_width = 0;
@@ -1663,7 +1663,7 @@ for (int i = top->start, j = 0; i < top->end; i++, j++) {
     trimSortingMeta(&entry_name);
 
     char display_name[256];
-    int text_width = GFX_truncateText(font.small, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
+    int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
     int max_width = MIN(available_width, text_width);
 
     int pill_x = SCALE1(PADDING); // Horizontal position of the pill
@@ -1682,7 +1682,7 @@ for (int i = top->start, j = 0; i < top->end; i++, j++) {
     }
 
     // Create the text surface here
-    SDL_Surface* text = TTF_RenderUTF8_Blended(font.small, display_name, text_color);
+    SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 
     // Calculate the center for the text within the pill
     int text_x = pill_x + (max_width - text->w) / 2; // Horizontal center of text
@@ -1706,7 +1706,7 @@ for (int i = top->start, j = 0; i < top->end; i++, j++) {
 				}
 				else {
 					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
-					GFX_blitMessage(font.small, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
+					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
 			
 				// buttons
