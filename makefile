@@ -23,11 +23,9 @@ all: release setup $(PLATFORMS) special package done
 ###########################################################
 release:
 BUILD_HASH:=$(shell git rev-parse --short HEAD)
-RELEASE_TIME:=$(shell TZ=GMT date +%Y%m%d)
-RELEASE_BETA=
-RELEASE_BASE=MinUI282-$(RELEASE_TIME)$(RELEASE_BETA)
-RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
-RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
+RELEASE_TIME:=$(shell date -u "+%Y%m%dT%H%M%S")
+RELEASE_BASE=MinUI282-$(RELEASE_TIME)
+RELEASE_NAME=$(RELEASE_BASE)-$(BUILD_HASH)
 ###########################################################
 	
 shell:
@@ -107,7 +105,7 @@ package: release
 	# ----------------------------------------------------
 	# zip up build
 	
-	cd ./build/SYSTEM && echo "$(RELEASE_NAME)\n$(BUILD_HASH)" > version.txt
+	cd ./build/SYSTEM && echo "$(RELEASE_NAME)" > version.txt
 	./commits.sh > ./build/SYSTEM/commits.txt
 	cd ./build && find . -type f -name '.DS_Store' -delete
 	mkdir -p ./build/PAYLOAD
@@ -119,8 +117,8 @@ package: release
 	
 	cp -R ./build/EXTRAS/* ./build/BASE
 	rm -rf ./build/BASE/miyoo354
-	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-$(shell cat ./workspace/hash.txt)-Miyoo_A30-base+extras.zip *
-	echo "$(RELEASE_NAME)-$(shell cat ./workspace/hash.txt)" > ./build/latest.txt
+	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME).zip *
+	echo "$(RELEASE_NAME)" > ./build/latest.txt
 	
 ###########################################################
 
