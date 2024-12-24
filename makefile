@@ -23,7 +23,7 @@ all: release setup $(PLATFORMS) special package done
 ###########################################################
 release:
 BUILD_HASH:=$(shell git rev-parse --short HEAD)
-RELEASE_TIME:=$(shell TZ=GMT date +%Y%m%d)
+RELEASE_TIME:=$(shell TZ=GMT date +%Y%m%dT%H%M%S)
 RELEASE_BETA=
 RELEASE_BASE=MinUI282-$(RELEASE_TIME)$(RELEASE_BETA)
 RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
@@ -119,7 +119,7 @@ package: release
 	
 	cp -R ./build/EXTRAS/* ./build/BASE
 	rm -rf ./build/BASE/miyoo354
-	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-$(BUILD_HASH)-$(shell TZ=GMT date +%Y%m%dT%hh%mm%ss).zip *
+	cd ./build/BASE && zip -r ../../releases/$(RELEASE_BASE)-$(BUILD_HASH).zip *
 	echo "$(RELEASE_NAME)-$(shell cat ./workspace/hash.txt)" > ./build/latest.txt
 	
 ###########################################################
